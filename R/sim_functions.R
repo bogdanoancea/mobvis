@@ -48,6 +48,7 @@ sim_get_cellplan <- function(sim) {
 
     suppressMessages({
         cellplanxml <- xml2::as_list(xml2::read_xml(file.path(sim$input_dir, "antennas.xml")))
+
         cp = tidyr::as_tibble(cellplanxml) %>%
             tidyr::unnest_wider(antennas) %>%
             tidyr::unnest(cols = names(.)) %>%
@@ -57,11 +58,22 @@ sim_get_cellplan <- function(sim) {
                           y2 = y,
                           cell = 1:dplyr::n(),
                           small = FALSE) %>%
-            st_as_sf(coords = c("x2", "y2"), crs = sim$crs)
+
+                st_as_sf(coords = c("x2", "y2"), crs = sim$crs)
     })
+
     cp
 }
 
+sim_get_cellplan2 <- function(sim, antennasFileName) {
+    cellplan <- as.data.table(fread(paste(file.path(sim$output_dir), '/' , antennasFileName, sep=""), sep = ',', header = TRUE, stringsAsFactors = FALSE))
+    cellplan[,x2:=x]
+    cellplan[,y2:=y]
+    cellplan[, small:=FALSE]
+    geometry <- st_as_sf(cellplan, coords = c("x2", "y2"), crs = sim$crs)
+    setnames(geometry, "Antenna ID", "cell")
+    geometry
+}
 
 #' @name sim_get_signal_strength
 #' @rdname sim_data
